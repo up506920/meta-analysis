@@ -13,13 +13,15 @@
 //on document load...
 $(document).ready(function () {
     //Check if meta-analysis ID has been passed - if not, show error
-
+    if (typeof top.glob == 'undefined') {
+        top.glob = "1";
+    }
     //
     $.ajax({
         type: 'POST',
         url: '/Meta/Test/',
         data: {
-            'id':'1'
+            'id':top.glob
         },
         dataType:'json',
         success: function(data){

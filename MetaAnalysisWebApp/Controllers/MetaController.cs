@@ -34,6 +34,16 @@ namespace MetaAnalysisWebApp.Controllers
         public ActionResult Test(string id)
         {
             //Test JSON data being sent from the "API" after AJAX request
+            int metaID;
+
+            if (Int32.TryParse(id, out metaID))
+            {
+                Console.WriteLine(metaID + " parsed successfully");
+            }
+            else
+            {
+                return Json("Error parsing Meta ID");
+            }
 
             List<ColumnsViewModel> columnsExp1 = new List<ColumnsViewModel>();
             columnsExp1.Add(new ColumnsViewModel("Type of Participants", "STU"));
@@ -48,8 +58,8 @@ namespace MetaAnalysisWebApp.Controllers
             List<StudiesViewModel> studies = new List<StudiesViewModel>();
             studies.Add(exp1);
             studies.Add(exp2);
-
-            MetaAnalysisAPIViewModel JsonData = new MetaAnalysisAPIViewModel(1, studies);
+            
+            MetaAnalysisAPIViewModel JsonData = new MetaAnalysisAPIViewModel(metaID, studies);
 
             string json = JsonConvert.SerializeObject(JsonData);
 
