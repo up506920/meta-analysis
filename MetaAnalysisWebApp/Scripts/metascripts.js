@@ -26,6 +26,27 @@ $(document).ready(function () {
         dataType:'json',
         success: function(data){
             alert(JSON.stringify(data));
+            $('#test').append(JSON.stringify(data));
+            generateMetaAnalysis(data);
     }
     });
 });
+
+
+
+function generateMetaAnalysis(data)
+{
+    jQuery.each(data.Studies, function(){
+        $('#metaContent').append("<p>Experiment ID: " + this.ExperimentID + "</p>");
+        $('#metaContent').append("<p>Experiment Name: " + this.ExperimentName + "</p>");
+        jQuery.each(this.Columns, function(){
+            $('#metaContent').append("<p><i>Column to include: " + this.ColumnName + "</i></p>");
+            $('#metaContent').append("<p><i>Column to include: " + this.ColumnName + "</i></p>");
+        });
+
+        
+    });
+    
+    //$('#metaContent').html(data[0].)
+}
+
