@@ -10,18 +10,30 @@
 *
 \************************************************************************************************************************/
 
+//Initialise global variables for table generation
+
+var tableHTML; 
+var headers = { "Experiment Name": [] };
+var tableHeaders = "<thead><tr>";
+var body;
+var tableBody = "<tbody>";
+
 //on document load...
+var params;
+
 $(document).ready(function () {
+    params = parseQueryParams();
     //Check if meta-analysis ID has been passed - if not, show error
-    if (typeof top.glob == 'undefined') {
-        top.glob = "1";
+    if (typeof params !== 'object' && params != null || params["id"] == undefined) {
+        alert("No meta-analysis ID passed - ID defaulted to 1");
+        params = { id: ["1"] };
     }
     //
     $.ajax({
         type: 'POST',
         url: '/Meta/Test/',
         data: {
-            'id':top.glob
+            'id':params["id"][0]
         },
         dataType:'json',
         success: function(data){
@@ -36,17 +48,114 @@ $(document).ready(function () {
 
 function generateMetaAnalysis(data)
 {
-    jQuery.each(data.Studies, function(){
-        $('#metaContent').append("<p>Experiment ID: " + this.ExperimentID + "</p>");
-        $('#metaContent').append("<p>Experiment Name: " + this.ExperimentName + "</p>");
-        jQuery.each(this.Columns, function(){
-            $('#metaContent').append("<p><i>Column to include: " + this.ColumnName + "</i></p>");
-            $('#metaContent').append("<p><i>Column to include: " + this.ColumnName + "</i></p>");
+    //Test area of the function - 23/01/2016
+    $('#idValue').append(params["id"][0]);
+    jQuery.each(data.Studies, function () {
+        $('#metaContent').append("<p><strong>Experiment ID: </strong>" + this.ExperimentID + "</p>");
+        $('#metaContent').append("<p><strong>Experiment Name: </strong>" + this.ExperimentName + "</p>");
+        jQuery.each(this.Columns, function () {
+            $('#metaContent').append("<p><i><strong>Column to include: </strong>" + this.ColumnName + "</i></p>");
+            $('#metaContent').append("<p><i><strong>Column Value: </strong>" + this.Value + "</i></p>");
         });
+    });
 
-        
+    //Populate table - 26/01/2016
+
+    tableHTML = "<table id = 'MetaID" + params["id"][0]; + "' class='display' cellspacing='0' width='100%'>";
+
+    //TODO: Turn into a separate function 26/01/2016
+
+    jQuery.each(data.Studies, function () {
+        //Populate all headers first
+        headers["Experiment Name"].push(this.ExperimentName);
+        jQuery.each(this.Columns, function () {
+            //For each column in each study, check if in headers array. If not, add it.
+            if (this.ColumnName in headers == false) {
+                //count how many experiment names there are to add blank space before, maintain structure
+                headers[this.ColumnName] = [];
+                for (i = 0; i < headers["Experiment Name"].length - 1; i++) {
+                    headers[this.ColumnName].push("");
+                }
+            }
+            headers[this.ColumnName].push(this.Value);
+            
+        });
+        //if there are columns in headers object that aren't in this studies columns, fill it with blank space
+        $.each(headers, function (index, value) {
+            while(value.length < headers["Experiment Name"].length)
+            {
+                value.push("");
+            }
+        });
     });
     
-    //$('#metaContent').html(data[0].)
+    //Populate table from values in arrays
+
+    //Table headers to HTML format:
+    for(i=0; i < headers["Experiment Name"].length; i++){
+        $.each(headers, function (index, value)
+        {
+            if(i==0)
+            {
+                AppendFromObjectToHTML("tableHeaders", index);
+            }
+            if (index == "Experiment Name") {
+                if (i == 0) {
+                    TableRowHTML("tableBodyStart");
+                }
+
+                else {
+                    TableRowHTML("tableBody");
+                }
+            }
+            AppendFromObjectToHTML("tableBody", value[i]);
+
+            //checks if it's on the last loop and if on the last index of the headers variable. If so, finish the HTML for the table.
+            //Unnecessary code now, left commented in case it is useful later
+
+            /*if (i == headers["Experiment Name"].length - 1 && value == headers[Object.keys(headers)[Object.keys(headers).length - 1]]) {
+                TableRowHTML("tableBodyEnd");
+            }*/
+
+        });
+    }
+    TableRowHTML("tableBodyEnd");
+    TableRowHTML("tableHeaders");
+
+
+    tableHTML += tableHeaders + tableBody;
+    $('#metaTableContainer').append("<b>test</b>");
+    $('#metaTableContainer').append(tableHTML);
+    //$('#MetaID' + params["id"][0]);
 }
 
+function AppendFromObjectToHTML(variableName, data)
+{
+    switch(variableName){
+        case "tableHeaders":
+            tableHeaders += "<th>" + data + "</th>";
+            break;
+        case "tableBody":
+            tableBody += "<td>" + data + "</td>";
+            break;
+    }
+    
+}
+
+function TableRowHTML(variableName)
+{
+    switch (variableName) {
+        case "tableHeaders":
+            tableHeaders += "</tr></thead>";
+            break;
+        case "tableBodyStart":
+            tableBody += "<tr>";
+            break;
+        case "tableBody":
+            tableBody += "</tr><tr>";
+            break;
+        case "tableBodyEnd":
+            tableBody += "</tr></tbody></table>";
+            break;
+    }
+}
