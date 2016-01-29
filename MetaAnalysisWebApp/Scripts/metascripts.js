@@ -61,7 +61,7 @@ function generateMetaAnalysis(data)
 
     //Populate table - 26/01/2016
 
-    tableHTML = "<table id = 'MetaID" + params["id"][0]; + "' class='display' cellspacing='0' width='100%'>";
+    tableHTML = "<table id = 'MetaID" + params['id'][0] + "' class='display' cellspacing='0' width='100%'>";
 
     //TODO: Turn into a separate function 26/01/2016
 
@@ -122,10 +122,17 @@ function generateMetaAnalysis(data)
     TableRowHTML("tableBodyEnd");
     TableRowHTML("tableHeaders");
 
+    //$('#metaTableContainer').append(tableHeaders);
+    //$('#metaTableContainer').append(tableBody);
+    //$('#metaTableContainer').html(tableHTML);
 
+
+    //$('#metaTableContainer').append(bigString.join(''));
     tableHTML += tableHeaders + tableBody;
-    $('#metaTableContainer').append("<b>test</b>");
-    $('#metaTableContainer').append(tableHTML);
+    //$('#metaTableContainer').append("<b>test</b>");
+
+
+    $('#metaTableContainer').html(tableHTML);
     //$('#MetaID' + params["id"][0]);
 }
 
