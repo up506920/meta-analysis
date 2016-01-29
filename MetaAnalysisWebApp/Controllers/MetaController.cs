@@ -48,11 +48,13 @@ namespace MetaAnalysisWebApp.Controllers
             List<ColumnsViewModel> columnsExp1 = new List<ColumnsViewModel>();
             columnsExp1.Add(new ColumnsViewModel("Type of Participants", "STU"));
             columnsExp1.Add(new ColumnsViewModel("Delay between the event & the PEI", "short"));
+            columnsExp1.Add(new ColumnsViewModel("Column that is only in Belli et al", "Test data"));
             StudiesViewModel exp1 = new StudiesViewModel(1, "Belli et al. (1994), Exp. 1", columnsExp1);
 
             List<ColumnsViewModel> columnsExp2 = new List<ColumnsViewModel>();
             columnsExp2.Add(new ColumnsViewModel("Type of Participants", "STU"));
             columnsExp2.Add(new ColumnsViewModel("Delay between the event & the PEI", "medium"));
+            columnsExp2.Add(new ColumnsViewModel("This column is only in Blank's data", "Test data 2"));
             StudiesViewModel exp2 = new StudiesViewModel(2, "Blank (1998), Exp. 1", columnsExp2);
 
             List<StudiesViewModel> studies = new List<StudiesViewModel>();

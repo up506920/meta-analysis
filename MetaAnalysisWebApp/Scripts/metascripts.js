@@ -6,7 +6,7 @@
 *
 * Created 19/01/2016 by Mathieu Pyle - University of Portsmouth - 506920
 *
-* Last Modified 22/01/2016 by Mathieu Pyle - University of Portsmouth - 506920
+* Last Modified 29/01/2016 by Mathieu Pyle - University of Portsmouth - 506920
 *
 \************************************************************************************************************************/
 
@@ -80,7 +80,7 @@ function generateMetaAnalysis(data)
             headers[this.ColumnName].push(this.Value);
             
         });
-        //if there are columns in headers object that aren't in this studies columns, fill it with blank space
+        //if there are columns in headers object that aren't in this study's columns, fill it with blank space
         $.each(headers, function (index, value) {
             while(value.length < headers["Experiment Name"].length)
             {
@@ -133,6 +133,7 @@ function generateMetaAnalysis(data)
 
 
     $('#metaTableContainer').html(tableHTML);
+    $('#MetaID' + params['id'][0]).DataTable();
     //$('#MetaID' + params["id"][0]);
 }
 
