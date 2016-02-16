@@ -48,6 +48,15 @@ namespace MetaAnalysisWebApp.Controllers
             List<ColumnsViewModel> columnsExp1 = new List<ColumnsViewModel>();
             columnsExp1.Add(new ColumnsViewModel("Type of Participants", "STU"));
             columnsExp1.Add(new ColumnsViewModel("Delay between the event & the PEI", "short"));
+            columnsExp1.Add(new ColumnsViewModel("Type of post event information", "IND"));
+            columnsExp1.Add(new ColumnsViewModel("No. misleading items (per participant)", "2"));
+            columnsExp1.Add(new ColumnsViewModel("Type of misleading items", "CON"));
+            columnsExp1.Add(new ColumnsViewModel("Type of control items", "NEU"));
+            columnsExp1.Add(new ColumnsViewModel("Misinformation manipulation (within/ between)", "within"));
+            columnsExp1.Add(new ColumnsViewModel("Misled Warning M", "0.37"));
+            columnsExp1.Add(new ColumnsViewModel("Misled Warning n", "72"));
+            columnsExp1.Add(new ColumnsViewModel("Control Warning M", "0.47"));
+            columnsExp1.Add(new ColumnsViewModel("Control Warning n", "72"));
             StudiesViewModel exp1 = new StudiesViewModel(1, "Belli et al. (1994), Exp. 1", columnsExp1);
 
             List<ColumnsViewModel> columnsExp2 = new List<ColumnsViewModel>();
