@@ -133,7 +133,27 @@ function generateMetaAnalysis(data)
 
 
     $('#metaTableContainer').html(tableHTML);
-    $('#MetaID' + params['id'][0]).DataTable();
+
+    //Initialise Datatable
+    $('#MetaID' + params["id"][0]).DataTable({
+        createdRow: function (row) {
+            $('td', row).attr('tabindex', 0);
+        }
+    });
+
+    //If new, ask which columns to do meta analysis on:
+
+    $('a.toggle-vis').on('click', function (e) {
+        e.preventDefault();
+
+        // Get the column API object
+        var column = table.column($(this).attr('data-column'));
+
+        // Toggle the visibility
+        column.visible(!column.visible());
+    });
+
+
     //$('#MetaID' + params["id"][0]);
 }
 
