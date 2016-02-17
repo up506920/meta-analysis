@@ -6,7 +6,7 @@
 *
 * Created 19/01/2016 by Mathieu Pyle - University of Portsmouth - 506920
 *
-* Last Modified 29/01/2016 by Mathieu Pyle - University of Portsmouth - 506920
+* Last Modified 16/02/2016 by Mathieu Pyle - University of Portsmouth - 506920
 *
 \************************************************************************************************************************/
 
@@ -17,6 +17,13 @@ var headers = { "Experiment Name": [] };
 var tableHeaders = "<thead><tr>";
 var body;
 var tableBody = "<tbody>";
+var clicked = 0;
+var warningText;
+var effectSizes = [];
+var controlName = null;
+var exposedName = null;
+var step = 1;
+var ajaxData;
 
 //on document load...
 var params;
@@ -37,9 +44,10 @@ $(document).ready(function () {
         },
         dataType:'json',
         success: function(data){
-            alert(JSON.stringify(data));
-            $('#test').append(JSON.stringify(data));
-            generateMetaAnalysis(data);
+            //alert(JSON.stringify(data));
+            //$('#test').append(JSON.stringify(data));
+            ajaxData = data;
+            generateMetaAnalysis(ajaxData);
     }
     });
 });
@@ -48,8 +56,13 @@ $(document).ready(function () {
 
 function generateMetaAnalysis(data)
 {
+
+    //Choose fields for meta analysis calculations:
+
+    
+    
     //Test area of the function - 23/01/2016
-    $('#idValue').append(params["id"][0]);
+    /*$('#idValue').append(params["id"][0]);
     jQuery.each(data.Studies, function () {
         $('#metaContent').append("<p><strong>Experiment ID: </strong>" + this.ExperimentID + "</p>");
         $('#metaContent').append("<p><strong>Experiment Name: </strong>" + this.ExperimentName + "</p>");
@@ -57,7 +70,7 @@ function generateMetaAnalysis(data)
             $('#metaContent').append("<p><i><strong>Column to include: </strong>" + this.ColumnName + "</i></p>");
             $('#metaContent').append("<p><i><strong>Column Value: </strong>" + this.Value + "</i></p>");
         });
-    });
+    });*/
 
     //Populate table - 26/01/2016
 
@@ -80,6 +93,7 @@ function generateMetaAnalysis(data)
             headers[this.ColumnName].push(this.Value);
             
         });
+
         //if there are columns in headers object that aren't in this study's columns, fill it with blank space
         $.each(headers, function (index, value) {
             while(value.length < headers["Experiment Name"].length)
@@ -89,6 +103,8 @@ function generateMetaAnalysis(data)
         });
     });
     
+
+
     //Populate table from values in arrays
 
     //Table headers to HTML format:
@@ -119,30 +135,22 @@ function generateMetaAnalysis(data)
 
         });
     }
+
+    //Make table:
     TableRowHTML("tableBodyEnd");
     TableRowHTML("tableHeaders");
-
-    //$('#metaTableContainer').append(tableHeaders);
-    //$('#metaTableContainer').append(tableBody);
-    //$('#metaTableContainer').html(tableHTML);
-
-
-    //$('#metaTableContainer').append(bigString.join(''));
     tableHTML += tableHeaders + tableBody;
-    //$('#metaTableContainer').append("<b>test</b>");
-
-
     $('#metaTableContainer').html(tableHTML);
 
-    //Initialise Datatable
+    //Initialise Datatable:
     $('#MetaID' + params["id"][0]).DataTable({
         createdRow: function (row) {
             $('td', row).attr('tabindex', 0);
         }
     });
-
+    
     //If new, ask which columns to do meta analysis on:
-
+    /*
     $('a.toggle-vis').on('click', function (e) {
         e.preventDefault();
 
@@ -151,10 +159,67 @@ function generateMetaAnalysis(data)
 
         // Toggle the visibility
         column.visible(!column.visible());
-    });
+    });*/
 
 
-    //$('#MetaID' + params["id"][0]);
+    //Prompt user to choose which columns to use 
+    //Check if new, then do this if it is:
+    UpdateWarningText();
+    //data = ChooseFieldsForEffectSizes(data);
+
+    //Regenerate tables
+    
+
+}
+
+function ChooseFieldsForEffectSizes()
+{
+
+    var typeOfEffectSize = "odds ratio";
+    var controlVal = null;
+    var exposedVal = null;
+
+    //incorporate in another loop:
+    for (i = 0; i < effectSizes.length; i++) {
+        jQuery.each(ajaxData.Studies, function () {
+            jQuery.each(this.Columns, function () {
+                switch (this.ColumnName) {
+                    case effectSizes[i].control:
+                        controlVal = this.Value;
+                        break;
+                    case effectSizes[i].exposed:
+                        exposedVal = this.Value;
+                        break;
+                    default:
+                        break;
+                }
+            });
+            if (controlVal != null && exposedVal != null) {
+                this.Columns.push({ ColumnName: effectSizes[i].control + " vs " + effectSizes[i].exposed + " Effect Size", Value: CalculateEffectSize(controlVal, exposedVal, typeOfEffectSize) });
+            }
+            controlVal = null;
+            exposedVal = null;
+
+        });
+    }
+    return ajaxData;
+
+}
+
+function CalculateEffectSize(control, exposed, type) {
+    //Pass argument to switch type of effect size
+
+    switch(type){
+        //Odds ratio
+        case "odds ratio":
+            var es = Math.log((control / (1 - control)) / (exposed / (1 - exposed)));
+            alert(es);
+            return es;
+
+        //Cohen's d
+
+        //etc...
+    }
 }
 
 function AppendFromObjectToHTML(variableName, data)
@@ -187,3 +252,57 @@ function TableRowHTML(variableName)
             break;
     }
 }
+
+function UpdateWarningText()
+{
+    switch (step) {
+        case 1:
+            warningText = "Choose the first EXPOSED column for calculating a meta analysis (control will be chosen later)";
+            $("#GenerateButton").hide();
+            break;
+        case 2:
+            warningText = "Click on a column to use as the control for " + controlName;
+            $("#GenerateButton").hide();
+            break;
+        case 3:
+            warningText = "Choose another set of columns or click 'Generate' to generate a Meta-Analysis";
+            $("#GenerateButton").show();
+            break;
+        default:
+            $("#GenerateButton").hide();
+            break;
+            return;
+    }
+    $('#WarningLabel').html("Step " + step.toString() + ": " + warningText);
+
+
+}
+
+
+//Event listener for choosing which columns to do meta analysis on
+$('#metaTableContainer').on('click', 'table tr th', function (e) {
+    switch(clicked)
+    {
+        case 0:
+            clicked++;
+            exposedName = $(e.target).text();
+            step = 2;
+            break;
+        case 1:
+            clicked = 0;
+            controlName = $(e.target).text();
+            step = 3;
+            break;
+    }
+    UpdateWarningText();
+    if (controlName && exposedName != null) {
+        effectSizes.push({ control: controlName, exposed: exposedName });
+        controlName = null;
+        exposedName = null;
+    }
+
+});
+
+$("#GenerateButton").click(function () {
+    ChooseFieldsForEffectSizes();
+});
