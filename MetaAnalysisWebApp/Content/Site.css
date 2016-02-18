@@ -59,3 +59,16 @@ textarea {
 .validation-summary-valid {
     display: none;
 }
+
+label {
+    display: block;
+}
+
+#GenerateButton {
+    display:none;
+}
+
+h1, h2 {
+    text-align: center;
+}
+

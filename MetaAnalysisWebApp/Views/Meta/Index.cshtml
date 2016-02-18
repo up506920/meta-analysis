@@ -1,18 +1,21 @@
-﻿@{
-    ViewBag.Title = "Index";
-}
+﻿<div class="container">
+    @{
+        ViewBag.Title = "Index";
+    }
 
-<h2>Index</h2>
+    <h2>Index</h2>
 
-<p>ID passed to C# is <span id="idValue"></span></p>
-
-<div id="test"></div>
-<div id="Warning">
-    <div id="WarningLabel"></div>
-    <button id="GenerateButton">Generate</button>
+    <div id="test"></div>
+    <div id="Warning">
+        <strong><div id="WarningLabel" class="bg-primary"></div></strong>
+        <button id="GenerateButton" class="btn btn-lg btn-success">Generate</button>
     </div>
-<div id="metaContent"></div>
+    <h2>Meta Analysis Data</h2>
 
-<div id="metaTableContainer"></div>
+    <div id="dialog"></div>
+    <div id="metaContent"></div>
 
-<table id="metaTest"></table>
+    <div id="metaTableContainer"></div>
+
+    <table id="metaTest"></table>
+</div>
