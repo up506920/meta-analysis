@@ -26,11 +26,12 @@ var step = 1;
 var ajaxData;
 var params;
 var isNew = true;
+var table;
 
 //When AJAX activity stops, unblock the UI.
 
 $(document).ready(function() {
-    //$.blockUI();
+    $.blockUI();
     params = parseQueryParams();
     //Check if meta-analysis ID has been passed - if not, show error
     if (typeof params !== 'object' && params != null || params["id"] == undefined) {
@@ -59,7 +60,6 @@ $(document).ready(function() {
 function generateMetaAnalysis(data) {
     //Check if meta analysis is new or not:
     isNew = CheckIfNew();
-
 
     //OpenDialog();
     //Populate table - 26/01/2016
@@ -94,13 +94,7 @@ function generateMetaAnalysis(data) {
 
     if (isNew) {
         //Prompt user to select fields that are the interpretations
-        var interpretations = OpenDialogBox("Step 1: Choose interpretations", "Looks like this is a new meta analysis. To start, please choose which of the following fields are interpretations (fields not to be used in generating statistical data for meta analysis):", headers, true, false);
-        //Highlight interpretations
-        $('#MetaID' + params["id"][0]).DataTable({
-            "aoColumnDefs": [
-                { "sClass": "column-2", "aTargets": [1] }
-            ]
-        });
+        OpenDialogBox("Step 1: Choose interpretations", "Looks like this is a new meta analysis. To start, please choose which of the following fields are interpretations (fields not to be used in generating statistical data for meta analysis):", headers, true, false);
     }
 
     //Populate table from values in arrays
@@ -137,11 +131,12 @@ function generateMetaAnalysis(data) {
     $('#metaTableContainer').html(tableHTML);
 
     //Initialise Datatable:
-    $('#MetaID' + params["id"][0]).DataTable({
+    table = $('#MetaID' + params["id"][0]).DataTable({
         scrollY: "300px",
         scrollX: true,
         scrollCollapse: true,
         paging: false,
+        bSort: false,
         fixedColumns: {
             leftColumns: 1
         },
@@ -212,7 +207,7 @@ function ChooseFieldsForEffectSizes() {
 }
 
 function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
-    var dialogData;
+    var dialogData = new Array();
     PopulateDialogText(title, msgString, checkList);
     if (isReturn) {
         $("#dialog").dialog({
@@ -223,20 +218,26 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
                 $(".ui-dialog-titlebar-close", ui.dialog | ui).hide();
             },
             buttons: {
-                "Confirm": function () {
-                    $("input:checkbox[name=type]:checked").each(function () {
-                        dialogData.push($(this).val());
-                    });
-                    $(this).dialog("close");
-                    if (returnCanBeNull)
-                        return dialogData;
-                    else {
-                        if (!dialogData == null)
-                            return dialogData;
+                "Confirm": {
+                    text: "Confirm",
+                    id: "confirmBtn",
+                    click: 
+                    function () {
+                        $("input:checkbox[name=field]:checked").each(function () {
+                            dialogData.push(parseInt($(this).val()));
+                        });
+                        $(this).dialog("close");
+                        if (returnCanBeNull)
+                            ConfirmButtonPressed(dialogData, 1)
                         else {
-                            //error handling if data is null
+                            if (dialogData != null)
+                                ConfirmButtonPressed(dialogData, 1)
+                            else {
+                                //error handling if data is null
+                            }
                         }
-                    }
+                }
+
                 }
             }
         });
@@ -245,12 +246,34 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
     }
 }
 
+function ConfirmButtonPressed(data, step)
+{
+    switch(step){
+        case 1:
+            //Highlight interpretations
+            table.destroy();
+            $('#MetaID' + params["id"][0]).DataTable({
+                "aoColumnDefs": [
+                    { "sClass": "interpretation", "aTargets": data }
+                ]
+            });
+            break;
+        default:
+            break;        
+    }
+}
 function PopulateDialogText(title, msgString, checkList) {
+    var arrayNumCount = 0;
     document.getElementById('dialog').title = title;
     $("#dialog").html(msgString);
+    //$("#dialog").append("<table class='grid' cellspacing='10'><tr><td></td>");
     $.each(headers, function (index, value) {
-        $('#dialog').append("<label><input type='checkbox' value='" + index + "'/>" + index + "</label>");
+        if (index != "Experiment Name") {
+            $('#dialog').append("<label><input type='checkbox' name='field' value='" + arrayNumCount + "'/>" + index + "</label>");
+        }
+        arrayNumCount++;
     });
+    //$("#dialog").append("</table>");
 }
 
 function CalculateEffectSize(control, exposed, type) {
