@@ -236,6 +236,7 @@
     <Content Include="Content\DataTables-1.10.10\media\images\sort_both.png" />
     <Content Include="Content\DataTables-1.10.10\media\images\sort_desc.png" />
     <Content Include="Content\DataTables-1.10.10\media\images\sort_desc_disabled.png" />
+    <Content Include="Content\datatables.min.css" />
     <Content Include="Content\DataTables\css\autoFill.bootstrap.css" />
     <Content Include="Content\DataTables\css\autoFill.bootstrap.min.css" />
     <Content Include="Content\DataTables\css\autoFill.dataTables.css" />
@@ -333,6 +334,7 @@
     <Content Include="Content\DataTables\images\sort_desc.png" />
     <Content Include="Content\DataTables\images\sort_desc_disabled.png" />
     <Content Include="Content\DataTables\swf\flashExport.swf" />
+    <Content Include="Content\jquery-ui.min.css" />
     <Content Include="Content\themes\base\images\ui-bg_flat_0_aaaaaa_40x100.png" />
     <Content Include="Content\themes\base\images\ui-bg_flat_75_ffffff_40x100.png" />
     <Content Include="Content\themes\base\images\ui-bg_glass_55_fbf9ee_1x400.png" />
@@ -472,6 +474,7 @@
     <Content Include="Scripts\DataTables-1.10.10\media\js\jquery.dataTables.js" />
     <Content Include="Scripts\DataTables-1.10.10\media\js\jquery.dataTables.min.js" />
     <Content Include="Scripts\DataTables-1.10.10\media\js\jquery.js" />
+    <Content Include="Scripts\datatables.min.js" />
     <Content Include="Scripts\DataTables\autoFill.bootstrap.js" />
     <Content Include="Scripts\DataTables\autoFill.bootstrap.min.js" />
     <Content Include="Scripts\DataTables\autoFill.foundation.js" />
@@ -532,6 +535,7 @@
     <None Include="Scripts\jquery.validate-vsdoc.js" />
     <Content Include="Scripts\jquery-ui-1.8.24.js" />
     <Content Include="Scripts\jquery-ui-1.8.24.min.js" />
+    <Content Include="Scripts\jquery-ui.min.js" />
     <Content Include="Scripts\jquery.blockUI.js" />
     <Content Include="Scripts\jquery.unobtrusive-ajax.js" />
     <Content Include="Scripts\jquery.unobtrusive-ajax.min.js" />

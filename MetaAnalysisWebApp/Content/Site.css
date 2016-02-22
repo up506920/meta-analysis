@@ -75,3 +75,17 @@ h1, h2 {
 .interpretation { 
     background-color: lightgreen;
 }
+
+.dataforcalcs { 
+    background-color: red;
+}
+
+.gridheader {
+    font-weight: bold;
+    padding: 5px;
+}
+
+.radioCenter
+{
+    text-align:center;
+}

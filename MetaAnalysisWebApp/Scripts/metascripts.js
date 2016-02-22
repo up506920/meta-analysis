@@ -26,7 +26,23 @@ var step = 1;
 var ajaxData;
 var params;
 var isNew = true;
-var table;
+var _table;
+var tableCols = [];
+var tableRows = [];
+var tableParams = {
+    scrollY: "300px",
+    scrollX: true,
+    scrollCollapse: true,
+    paging: false,
+    bSort: false,
+    //"aoColumnDefs": { "sClass": "interpretation", "aTargets": 2 },
+    fixedColumns: {
+        leftColumns: 1
+    },
+    createdRow: function (row) {
+        $('td', row).attr('tabindex', 0);
+    }
+};
 
 //When AJAX activity stops, unblock the UI.
 
@@ -67,7 +83,7 @@ function generateMetaAnalysis(data) {
     tableHTML = "<table id = 'MetaID" + params['id'][0] + "' class='display' cellspacing='0' width='100%'>";
 
     //TODO: Turn into a separate function 26/01/2016
-
+    
     jQuery.each(data.Studies, function() {
         //Populate all headers first
         headers["Experiment Name"].push(this.ExperimentName);
@@ -92,6 +108,17 @@ function generateMetaAnalysis(data) {
         });
     });
 
+    var colCount = 0
+    $.each(headers, function(index, value){
+        colCount++;
+        tableCols.push({ "mDataProp": "Field" + colCount, sTitle: index });
+    });
+    
+    for (i = 0; i < tableCols.length; i++) {
+        tableCols[i]
+    }
+
+
     if (isNew) {
         //Prompt user to select fields that are the interpretations
         OpenDialogBox("Step 1: Choose interpretations", "Looks like this is a new meta analysis. To start, please choose which of the following fields are interpretations (fields not to be used in generating statistical data for meta analysis):", headers, true, false);
@@ -99,51 +126,12 @@ function generateMetaAnalysis(data) {
 
     //Populate table from values in arrays
 
-    //Table headers to HTML format:
-    for (i = 0; i < headers["Experiment Name"].length; i++) {
-        $.each(headers, function(index, value) {
-            if (i == 0) {
-                AppendFromObjectToHTML("tableHeaders", index);
-            }
-            if (index == "Experiment Name") {
-                if (i == 0) {
-                    TableRowHTML("tableBodyStart");
-                } else {
-                    TableRowHTML("tableBody");
-                }
-            }
-            AppendFromObjectToHTML("tableBody", value[i]);
-
-            //checks if it's on the last loop and if on the last index of the headers variable. If so, finish the HTML for the table.
-            //Unnecessary code now, left commented in case it is useful later
-
-            /*if (i == headers["Experiment Name"].length - 1 && value == headers[Object.keys(headers)[Object.keys(headers).length - 1]]) {
-                TableRowHTML("tableBodyEnd");
-            }*/
-
-        });
-    }
-
-    //Make table:
-    TableRowHTML("tableBodyEnd");
-    TableRowHTML("tableHeaders");
-    tableHTML += tableHeaders + tableBody;
-    $('#metaTableContainer').html(tableHTML);
+    
+    
 
     //Initialise Datatable:
-    table = $('#MetaID' + params["id"][0]).DataTable({
-        scrollY: "300px",
-        scrollX: true,
-        scrollCollapse: true,
-        paging: false,
-        bSort: false,
-        fixedColumns: {
-            leftColumns: 1
-        },
-        createdRow: function(row) {
-            $('td', row).attr('tabindex', 0);
-        }
-    });
+
+    BuildDataTable();
 
     //If new, ask which columns to do meta analysis on:
     /*
@@ -207,11 +195,12 @@ function ChooseFieldsForEffectSizes() {
 }
 
 function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
-    var dialogData = new Array();
+    var interpretations = new Array();
+    var dataForCalcs = new Array();
     PopulateDialogText(title, msgString, checkList);
     if (isReturn) {
         $("#dialog").dialog({
-            width: 350,
+            width: 500,
             modal: true,
             closeOnEscape: false,
             open: function(event, ui) {
@@ -223,15 +212,21 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
                     id: "confirmBtn",
                     click: 
                     function () {
-                        $("input:checkbox[name=field]:checked").each(function () {
-                            dialogData.push(parseInt($(this).val()));
+                        $("input:radio:checked").each(function () {
+                            if($(this).val() == "interpretation"){
+                                interpretations.push(parseInt($(this).attr('name')));
+                            }
+                            else if($(this).val() == "data")
+                            {
+                                dataForCalcs.push(parseInt($(this).attr('name')));
+                            }
                         });
                         $(this).dialog("close");
                         if (returnCanBeNull)
-                            ConfirmButtonPressed(dialogData, 1)
+                            ConfirmButtonPressed(interpretations, dataForCalcs)
                         else {
-                            if (dialogData != null)
-                                ConfirmButtonPressed(dialogData, 1)
+                            if (interpretations != null && dataForCalcs != null)
+                                ConfirmButtonPressed(interpretations, dataForCalcs)
                             else {
                                 //error handling if data is null
                             }
@@ -246,34 +241,26 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
     }
 }
 
-function ConfirmButtonPressed(data, step)
+function ConfirmButtonPressed(data1, data2)
 {
-    switch(step){
-        case 1:
             //Highlight interpretations
-            table.destroy();
-            $('#MetaID' + params["id"][0]).DataTable({
-                "aoColumnDefs": [
-                    { "sClass": "interpretation", "aTargets": data }
-                ]
-            });
-            break;
-        default:
-            break;        
-    }
+    tableParams["aoColumnDefs"] = [{ "sClass": "interpretation", "aTargets": data1 },
+            { "sClass": "dataforcalcs", "aTargets": data2 }];
+    BuildDataTable();
 }
 function PopulateDialogText(title, msgString, checkList) {
     var arrayNumCount = 0;
     document.getElementById('dialog').title = title;
     $("#dialog").html(msgString);
-    //$("#dialog").append("<table class='grid' cellspacing='10'><tr><td></td>");
+    $("#dialog").append("<table class='grid' cellspacing='10'>");
+    $("#dialog").append("<tr><td class='gridheader'> </td><td class='gridheader'>Interpretation</td><td class='gridheader'>Data For Statistical Use</td></tr>");
     $.each(headers, function (index, value) {
         if (index != "Experiment Name") {
-            $('#dialog').append("<label><input type='checkbox' name='field' value='" + arrayNumCount + "'/>" + index + "</label>");
+            $('#dialog').append("<tr><td class='griditem'>" + index + "</td><td class='radioCenter'><input type='radio' name='" + arrayNumCount + "' value='interpretation' class='radioCenter'/></td><td class = 'radioCenter'><input type='radio' name='" + arrayNumCount + "' value='data' class='radioCenter'/></td></tr>");
         }
         arrayNumCount++;
     });
-    //$("#dialog").append("</table>");
+    $("#dialog").append("</table>");
 }
 
 function CalculateEffectSize(control, exposed, type) {
@@ -290,7 +277,6 @@ function CalculateEffectSize(control, exposed, type) {
             //etc...
     }
 }
-
 
 function CheckIfNew() {
     //checks if the meta analysis has been generated before or not
@@ -353,6 +339,14 @@ function UpdateWarningText() {
 
 }
 
+function BuildDataTable() {
+
+    if (typeof (_table) != "undefined") {
+        if(_table != null)
+            _table.destroy();
+    }
+    _table = $('#MetaID' + params["id"][0]).DataTable(tableParams);
+}
 
 //Event listener for choosing which columns to do meta analysis on
 $('#metaTableContainer').on('click', 'table tr th', function(e) {
