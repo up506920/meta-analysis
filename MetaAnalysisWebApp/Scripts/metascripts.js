@@ -29,9 +29,11 @@ var isNew = true;
 var _table;
 var tableCols = [];
 var tableRows = [];
+var hiddenColumns = [];
 var tableParams = {
     data: tableRows,
     columns: tableCols,
+    "aoColumnDefs": [],
     scrollY: "300px",
     scrollX: true,
     scrollCollapse: true,
@@ -45,6 +47,7 @@ var tableParams = {
         $('td', row).attr('tabindex', 0);
     }
 };
+var lastClicked;
 
 Array.prototype.multisplice = function () {
     //function taken from http://upshots.org/actionscript/javascript-splice-array-on-multiple-indices-multisplice
@@ -178,6 +181,28 @@ function ChooseFieldsForEffectSizes() {
 
 }
 
+function HideColumn()
+{
+    var nameOfColumn;
+    var arrayNumOfColumn = 0;
+    if (lastClicked.tagName == "TH") {
+        nameOfColumn = lastClicked.innerText;
+    }
+    else {
+        //if they click on the td, get the th that corresponds with it
+        nameOfColumn = $(lastClicked).closest('table').find('th').eq($(lastClicked).index()).innerHTML;
+        nameOfColumn = nameOfColumn.innerText;
+    }
+    $.each(headers, function (index, value) {
+        if (index == nameOfColumn)
+            return false;
+        arrayNumOfColumn++;
+    });
+    hiddenColumns.push(arrayNumOfColumn);
+    tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
+    BuildDataTable();
+}
+
 function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull, step) {
     var interpretations = new Array();
     var dataForCalcs = new Array();
@@ -185,6 +210,7 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull, s
     $.unblockUI();
     if (isReturn) {
         $("#dialog").dialog({
+            title: title,
             width: 500,
             modal: true,
             closeOnEscape: false,
@@ -206,13 +232,11 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull, s
                                 dataForCalcs.push(parseInt($(this).attr('name')));
                             }
                         });
-                        var indexesToSplice = [];
-                        $("input:checkbox:not(:checked)").each(function () {
-                            indexesToSplice.push(parseInt($(this).val()));
-                            delete headers[$(this).attr('name')];
+                        $("input:checkbox[name=field]:not(:checked)").each(function () {
+                            hiddenColumns.push(parseInt($(this).val()));
                         });
-                        if (indexesToSplice.length > 0) {
-                            MultipleSplice(indexesToSplice);
+                        if (hiddenColumns.length > 0) {
+                            tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
                         }
                         $(this).dialog("close");
                         switch(step){
@@ -246,7 +270,7 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull, s
 
 function Step2(){
 
-    OpenDialogBox("Step 2: Choose interpretations", "Looks like this is a new meta analysis. To start, please choose which of the following fields are interpretations (fields not to be used in generating statistical data for meta analysis):", headers, true, false, 2);
+    OpenDialogBox("Step 2: Choose interpretations", "Looks like this is a new meta analysis. To start, please choose which of the following fields are interpretations (fields not to be used in generating statistical data for meta analysis), and which are to be used for statistics (i.e. generating effect sizes):", headers, true, false, 2);
 
     //Initialise Datatable:
     tableHTML = "<table id = 'MetaID" + params['id'][0] + "' class='display' cellspacing='0' width='100%'></table>";
@@ -277,17 +301,12 @@ function Step2(){
 
 }
 
-function MultipleSplice(indexesToSplice) {
-    //remove unwanted fields from arrays
-    tableCols.multisplice(1, 5, 2, 3);
-    tableRows.multisplice(indexesToSplice);
-}
 
 function ConfirmButtonPressed(data1, data2)
 {
             //Highlight interpretations
-    tableParams["aoColumnDefs"] = [{ "sClass": "interpretation", "aTargets": data1 },
-            { "sClass": "dataforcalcs", "aTargets": data2 }];
+    tableParams["aoColumnDefs"].push({ "sClass": "interpretation", "aTargets": data1 },
+            { "sClass": "dataforcalcs", "aTargets": data2 });
     BuildDataTable();
 }
 
@@ -297,6 +316,7 @@ function PopulateDialogText(title, msgString, checkList, step) {
     $("#dialog").html(msgString);
     switch (step) {
         case 1:
+            $('#dialog').append("<label id='selectAll'><input type='checkbox' onClick='toggle(this)' value='selectAll'/>Select/Deselect All</label>");
             $.each(headers, function (index, value) {
                 if (index != "Experiment Name") {
                     $('#dialog').append("<label><input type='checkbox' name='field' value='" + arrayNumCount + "'/>" + index + "</label>");
@@ -309,13 +329,22 @@ function PopulateDialogText(title, msgString, checkList, step) {
             $("#dialog").append("<tr><td class='gridheader'> </td><td class='gridheader'>Interpretation</td><td class='gridheader'>Data For Statistical Use</td></tr>");
             $.each(headers, function (index, value) {
                 if (index != "Experiment Name") {
-                    $('#dialog').append("<tr><td class='griditem'>" + index + "</td><td class='radioCenter'><input type='radio' name='" + arrayNumCount + "' value='interpretation' class='radioCenter'/></td><td class = 'radioCenter'><input type='radio' name='" + arrayNumCount + "' value='data' class='radioCenter'/></td></tr>");
+                    if(hiddenColumns.indexOf(arrayNumCount) < 0)
+                        $('#dialog').append("<tr><td class='griditem'>" + index + "</td><td class='radioCenter'><input type='radio' name='" + arrayNumCount + "' value='interpretation' class='radioCenter'/></td><td class = 'radioCenter'><input type='radio' name='" + arrayNumCount + "' value='data' class='radioCenter'/></td></tr>");
                 }
                 arrayNumCount++;
             });
             $("#dialog").append("</table>");
     }
     
+}
+
+function toggle(source){
+    checkboxes = document.getElementsByName('field');
+    for(var i=0; i<checkboxes.length; i++){
+        checkboxes[i].checked = source.checked;
+    }
+
 }
 
 function CalculateEffectSize(control, exposed, type) {
@@ -448,4 +477,52 @@ $(window).resize(function() {
         at: "center",
         of: window
     });
+});
+
+//custom right click menu
+$(document).bind("contextmenu", function (event) {
+    //taken and edited from: http://stackoverflow.com/questions/4495626/making-custom-right-click-context-menus-for-my-web-app
+    // Avoid the real one
+    event.preventDefault();
+    lastClicked = event.target;
+    //if over a column:
+    if (event.target.tagName == "TH" || event.target.tagName == "TD") {
+        // Show contextmenu
+        $(".custom-menu").finish().toggle(100).
+
+        // In the right position (the mouse)
+        css({
+            top: event.pageY + "px",
+            left: event.pageX + "px"
+        });
+    }
+    
+});
+
+$(document).bind("mousedown", function (e) {
+
+    // If the clicked element is not the menu
+    if (!$(e.target).parents(".custom-menu").length > 0) {
+
+        // Hide it
+        $(".custom-menu").hide(100);
+    }
+});
+
+
+// If the menu element is clicked
+$(".custom-menu li").click(function () {
+
+    // This is the triggered action name
+    switch ($(this).attr("data-action")) {
+
+        // A case for each action. Your actions here
+        case "hide": HideColumn(); break;
+        case "control": alert("Select this column as a control column"); break;
+        case "exposed": alert("Select this column as an exposed column"); break;
+        case "columndef": alert("Change this columns definition (e.g. interpretation etc from step 2)"); break;
+    }
+
+    // Hide it AFTER the action was triggered
+    $(".custom-menu").hide(100);
 });

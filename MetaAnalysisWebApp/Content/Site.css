@@ -66,6 +66,7 @@ label {
 
 #GenerateButton {
     display:none;
+    cursor: pointer;
 }
 
 h1, h2 {
@@ -78,6 +79,7 @@ h1, h2 {
 
 .dataforcalcs { 
     background-color: red;
+    cursor: pointer;
 }
 
 .gridheader {
@@ -88,4 +90,28 @@ h1, h2 {
 .radioCenter
 {
     text-align:center;
+}
+#selectAll {
+    color: red;
+}
+.custom-menu {
+    display: none;
+    z-index: 1000;
+    position: absolute;
+    overflow: hidden;
+    border: 1px solid #CCC;
+    white-space: nowrap;
+    font-family: sans-serif;
+    background: #FFF;
+    color: #333;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.noBullet {
+    list-style-type:none;
+    cursor: pointer;
+}
+input[type=radio]{
+    cursor: pointer;
 }
