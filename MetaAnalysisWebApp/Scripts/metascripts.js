@@ -46,7 +46,17 @@ var tableParams = {
     }
 };
 
-//When AJAX activity stops, unblock the UI.
+Array.prototype.multisplice = function () {
+    //function taken from http://upshots.org/actionscript/javascript-splice-array-on-multiple-indices-multisplice
+    var args = Array.apply(null, arguments);
+    args.sort(function (a, b) {
+        return a - b;
+    });
+    for (var i = 0; i < args.length; i++) {
+        var index = args[i] - i;
+        this.splice(index, 1);
+    }
+}
 
 $(document).ready(function() {
     $.blockUI();
@@ -76,9 +86,11 @@ $(document).ready(function() {
 });
 
 function generateMetaAnalysis(data) {
+
     //Check if meta analysis is new or not:
+
     isNew = CheckIfNew();
-   
+    
     //TODO: Turn into a separate function 26/01/2016
     
     jQuery.each(data.Studies, function() {
@@ -117,40 +129,13 @@ function generateMetaAnalysis(data) {
             } 
         });
     }
-   
+
     if (isNew) {
+        OpenDialogBox("Step 1: Choose fields", "Looks like this is a new meta analysis. To start, please choose which of the following fields you would like to keep in the meta analysis", headers, true, false, 1);
         //Prompt user to select fields that are the interpretations
-        OpenDialogBox("Step 1: Choose interpretations", "Looks like this is a new meta analysis. To start, please choose which of the following fields are interpretations (fields not to be used in generating statistical data for meta analysis):", headers, true, false);
     }
 
     //Populate table from values in arrays
-
-
-    //Initialise Datatable:
-    tableHTML = "<table id = 'MetaID" + params['id'][0] + "' class='display' cellspacing='0' width='100%'></table>";
-    BuildDataTable();
-
-    //If new, ask which columns to do meta analysis on:
-    /*
-    $('a.toggle-vis').on('click', function (e) {
-        e.preventDefault();
-
-        // Get the column API object
-        var column = table.column($(this).attr('data-column'));
-
-        // Toggle the visibility
-        column.visible(!column.visible());
-    });*/
-
-
-    //Prompt user to choose which columns to use 
-    //Check if new, then do this if it is:
-    UpdateWarningText();
-
-    $.unblockUI();
-    //data = ChooseFieldsForEffectSizes(data);
-
-    //Regenerate tables
 
 
 }
@@ -193,10 +178,11 @@ function ChooseFieldsForEffectSizes() {
 
 }
 
-function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
+function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull, step) {
     var interpretations = new Array();
     var dataForCalcs = new Array();
-    PopulateDialogText(title, msgString, checkList);
+    PopulateDialogText(title, msgString, checkList, step);
+    $.unblockUI();
     if (isReturn) {
         $("#dialog").dialog({
             width: 500,
@@ -220,16 +206,34 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
                                 dataForCalcs.push(parseInt($(this).attr('name')));
                             }
                         });
-                        $(this).dialog("close");
-                        if (returnCanBeNull)
-                            ConfirmButtonPressed(interpretations, dataForCalcs)
-                        else {
-                            if (interpretations != null && dataForCalcs != null)
-                                ConfirmButtonPressed(interpretations, dataForCalcs)
-                            else {
-                                //error handling if data is null
-                            }
+                        var indexesToSplice = [];
+                        $("input:checkbox:not(:checked)").each(function () {
+                            indexesToSplice.push(parseInt($(this).val()));
+                            delete headers[$(this).attr('name')];
+                        });
+                        if (indexesToSplice.length > 0) {
+                            MultipleSplice(indexesToSplice);
                         }
+                        $(this).dialog("close");
+                        switch(step){
+                            case 1:
+                                Step2();
+                                break;
+                            case 2:
+                                if (returnCanBeNull)
+                                    ConfirmButtonPressed(interpretations, dataForCalcs)
+                                else {
+                                    if (interpretations != null && dataForCalcs != null)
+                                        ConfirmButtonPressed(interpretations, dataForCalcs)
+                                    else {
+                                        //error handling if data is null
+                                    }
+                                }
+                                break;
+                            default:
+                                break;
+                        }
+                        
                 }
 
                 }
@@ -240,6 +244,45 @@ function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull) {
     }
 }
 
+function Step2(){
+
+    OpenDialogBox("Step 2: Choose interpretations", "Looks like this is a new meta analysis. To start, please choose which of the following fields are interpretations (fields not to be used in generating statistical data for meta analysis):", headers, true, false, 2);
+
+    //Initialise Datatable:
+    tableHTML = "<table id = 'MetaID" + params['id'][0] + "' class='display' cellspacing='0' width='100%'></table>";
+    BuildDataTable();
+
+    //If new, ask which columns to do meta analysis on:
+    /*
+    $('a.toggle-vis').on('click', function (e) {
+        e.preventDefault();
+
+        // Get the column API object
+        var column = table.column($(this).attr('data-column'));
+
+        // Toggle the visibility
+        column.visible(!column.visible());
+    });*/
+
+
+    //Prompt user to choose which columns to use 
+    //Check if new, then do this if it is:
+    UpdateWarningText();
+
+
+    //data = ChooseFieldsForEffectSizes(data);
+
+    //Regenerate tables
+
+
+}
+
+function MultipleSplice(indexesToSplice) {
+    //remove unwanted fields from arrays
+    tableCols.multisplice(1, 5, 2, 3);
+    tableRows.multisplice(indexesToSplice);
+}
+
 function ConfirmButtonPressed(data1, data2)
 {
             //Highlight interpretations
@@ -248,19 +291,31 @@ function ConfirmButtonPressed(data1, data2)
     BuildDataTable();
 }
 
-function PopulateDialogText(title, msgString, checkList) {
+function PopulateDialogText(title, msgString, checkList, step) {
     var arrayNumCount = 0;
     document.getElementById('dialog').title = title;
     $("#dialog").html(msgString);
-    $("#dialog").append("<table class='grid' cellspacing='10'>");
-    $("#dialog").append("<tr><td class='gridheader'> </td><td class='gridheader'>Interpretation</td><td class='gridheader'>Data For Statistical Use</td></tr>");
-    $.each(headers, function (index, value) {
-        if (index != "Experiment Name") {
-            $('#dialog').append("<tr><td class='griditem'>" + index + "</td><td class='radioCenter'><input type='radio' name='" + arrayNumCount + "' value='interpretation' class='radioCenter'/></td><td class = 'radioCenter'><input type='radio' name='" + arrayNumCount + "' value='data' class='radioCenter'/></td></tr>");
-        }
-        arrayNumCount++;
-    });
-    $("#dialog").append("</table>");
+    switch (step) {
+        case 1:
+            $.each(headers, function (index, value) {
+                if (index != "Experiment Name") {
+                    $('#dialog').append("<label><input type='checkbox' name='field' value='" + arrayNumCount + "'/>" + index + "</label>");
+                }
+                arrayNumCount++;
+            });
+            break;
+        case 2:
+            $("#dialog").append("<table class='grid' cellspacing='10'>");
+            $("#dialog").append("<tr><td class='gridheader'> </td><td class='gridheader'>Interpretation</td><td class='gridheader'>Data For Statistical Use</td></tr>");
+            $.each(headers, function (index, value) {
+                if (index != "Experiment Name") {
+                    $('#dialog').append("<tr><td class='griditem'>" + index + "</td><td class='radioCenter'><input type='radio' name='" + arrayNumCount + "' value='interpretation' class='radioCenter'/></td><td class = 'radioCenter'><input type='radio' name='" + arrayNumCount + "' value='data' class='radioCenter'/></td></tr>");
+                }
+                arrayNumCount++;
+            });
+            $("#dialog").append("</table>");
+    }
+    
 }
 
 function CalculateEffectSize(control, exposed, type) {
