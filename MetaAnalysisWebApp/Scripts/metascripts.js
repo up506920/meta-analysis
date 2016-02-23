@@ -30,6 +30,8 @@ var _table;
 var tableCols = [];
 var tableRows = [];
 var tableParams = {
+    data: tableRows,
+    columns: tableCols,
     scrollY: "300px",
     scrollX: true,
     scrollCollapse: true,
@@ -76,12 +78,7 @@ $(document).ready(function() {
 function generateMetaAnalysis(data) {
     //Check if meta analysis is new or not:
     isNew = CheckIfNew();
-
-    //OpenDialog();
-    //Populate table - 26/01/2016
-
-    tableHTML = "<table id = 'MetaID" + params['id'][0] + "' class='display' cellspacing='0' width='100%'>";
-
+   
     //TODO: Turn into a separate function 26/01/2016
     
     jQuery.each(data.Studies, function() {
@@ -97,7 +94,6 @@ function generateMetaAnalysis(data) {
                 }
             }
             headers[this.ColumnName].push(this.Value);
-
         });
 
         //if there are columns in headers object that aren't in this study's columns, fill it with blank space
@@ -108,17 +104,20 @@ function generateMetaAnalysis(data) {
         });
     });
 
-    var colCount = 0
-    $.each(headers, function(index, value){
-        colCount++;
-        tableCols.push({ "mDataProp": "Field" + colCount, sTitle: index });
-    });
-    
-    for (i = 0; i < tableCols.length; i++) {
-        tableCols[i]
+    var rowData = [];
+    for (i = 0; i < headers["Experiment Name"].length; i++){
+        $.each(headers, function(index, value){
+            if (i == 0) {
+                tableCols.push({ title: index });
+            }
+            rowData.push(value[i]);
+            if (rowData.length == Object.keys(headers).length) {
+                tableRows.push(rowData);
+                rowData = [];
+            } 
+        });
     }
-
-
+   
     if (isNew) {
         //Prompt user to select fields that are the interpretations
         OpenDialogBox("Step 1: Choose interpretations", "Looks like this is a new meta analysis. To start, please choose which of the following fields are interpretations (fields not to be used in generating statistical data for meta analysis):", headers, true, false);
@@ -126,11 +125,9 @@ function generateMetaAnalysis(data) {
 
     //Populate table from values in arrays
 
-    
-    
 
     //Initialise Datatable:
-
+    tableHTML = "<table id = 'MetaID" + params['id'][0] + "' class='display' cellspacing='0' width='100%'></table>";
     BuildDataTable();
 
     //If new, ask which columns to do meta analysis on:
@@ -165,8 +162,9 @@ function ChooseFieldsForEffectSizes() {
     var exposedVal = null;
 
     //incorporate in another loop:
+    x = 0;
     for (i = 0; i < effectSizes.length; i++) {
-        jQuery.each(ajaxData.Studies, function() {
+        jQuery.each(ajaxData.Studies, function () {
             jQuery.each(this.Columns, function() {
                 switch (this.ColumnName) {
                     case effectSizes[i].control:
@@ -180,17 +178,18 @@ function ChooseFieldsForEffectSizes() {
                 }
             });
             if (controlVal != null && exposedVal != null) {
-                this.Columns.push({
-                    ColumnName: effectSizes[i].control + " vs " + effectSizes[i].exposed + " Effect Size",
-                    Value: CalculateEffectSize(controlVal, exposedVal, typeOfEffectSize)
-                });
+                tableCols.push({ title: effectSizes[i].control + " vs " + effectSizes[i].exposed + " Effect Size" });
+                tableRows[x].push(CalculateEffectSize(controlVal, exposedVal, typeOfEffectSize).toString());
             }
+            else
+                tableRows[x].push("");
             controlVal = null;
             exposedVal = null;
-
+            x++;
         });
     }
-    return ajaxData;
+    //Rebuild table with new columns
+    BuildDataTable();
 
 }
 
@@ -248,6 +247,7 @@ function ConfirmButtonPressed(data1, data2)
             { "sClass": "dataforcalcs", "aTargets": data2 }];
     BuildDataTable();
 }
+
 function PopulateDialogText(title, msgString, checkList) {
     var arrayNumCount = 0;
     document.getElementById('dialog').title = title;
@@ -345,33 +345,42 @@ function BuildDataTable() {
         if(_table != null)
             _table.destroy();
     }
+    $('#metaTableContainer').html(tableHTML);
+    //refresh variable params
+    tableParams.data = tableRows;
+    tableParams.columns = tableCols;
     _table = $('#MetaID' + params["id"][0]).DataTable(tableParams);
 }
 
 //Event listener for choosing which columns to do meta analysis on
-$('#metaTableContainer').on('click', 'table tr th', function(e) {
-    switch (clicked) {
-        case 0:
-            clicked++;
-            exposedName = $(e.target).text();
-            step = 2;
-            break;
-        case 1:
-            clicked = 0;
-            controlName = $(e.target).text();
-            step = 3;
-            break;
+$('#metaTableContainer').on('click', 'table tr th', function (e) {
+    if ($(this).hasClass("dataforcalcs")) {
+        switch (clicked) {
+            case 0:
+                clicked++;
+                exposedName = $(e.target).text();
+                step = 2;
+                break;
+            case 1:
+                clicked = 0;
+                controlName = $(e.target).text();
+                step = 3;
+                break;
+        }
+        UpdateWarningText();
+        if (controlName && exposedName != null) {
+            effectSizes.push({
+                control: controlName,
+                exposed: exposedName
+            });
+            controlName = null;
+            exposedName = null;
+        }
     }
-    UpdateWarningText();
-    if (controlName && exposedName != null) {
-        effectSizes.push({
-            control: controlName,
-            exposed: exposedName
-        });
-        controlName = null;
-        exposedName = null;
+    else
+    {
+        alert("Please select a field that has been selected for use with calculations");
     }
-
 });
 
 $("#GenerateButton").click(function() {
