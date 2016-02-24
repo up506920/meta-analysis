@@ -1,14 +1,29 @@
-﻿body {
+﻿html {
+    background-color: lightgray;
+}
+body {
     font-size:  1em;
     font-family: "Segoe UI", Verdana, Helvetica, Sans-Serif;
     color: #232323;
-    background-color: #fff;
+    background-color: #eaeaea;
 }
 
 header, footer, nav, section {
     display: block;
 }
 
+.container {
+    background-color: white;
+    height: 100vh;
+}
+
+#metaTableContainer {
+    padding-top: 2em;
+}
+
+.footerText{
+    text-align:center;
+}
 
 /* Styles for basic forms
 -----------------------------------------------------------*/

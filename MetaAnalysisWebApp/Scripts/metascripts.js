@@ -61,7 +61,7 @@ Array.prototype.multisplice = function () {
     }
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
     $.blockUI();
     params = parseQueryParams();
     //Check if meta-analysis ID has been passed - if not, show error
@@ -135,7 +135,7 @@ function generateMetaAnalysis(data) {
 
     if (isNew) {
         OpenDialogBox("Step 1: Choose fields", "Looks like this is a new meta analysis. To start, please choose which of the following fields you would like to keep in the meta analysis", headers, true, false, 1);
-        //Prompt user to select fields that are the interpretations
+        registerHandlers();
     }
 
     //Populate table from values in arrays
@@ -323,10 +323,10 @@ function PopulateDialogText(title, msgString, checkList, step) {
     $("#dialog").html(msgString);
     switch (step) {
         case 1:
-            $('#dialog').append("<label id='selectAll'><input type='checkbox' onClick='toggle(this)' value='selectAll'/>Select/Deselect All</label>");
+            $('#dialog').append("<label id='selectAll'><input type='checkbox' onClick='toggle(this)' value='selectAll' id='checkAll' checked/>Select/Deselect All</label>");
             $.each(headers, function (index, value) {
                 if (index != "Experiment Name") {
-                    $('#dialog').append("<label><input type='checkbox' name='field' value='" + arrayNumCount + "'/>" + index + "</label>");
+                    $('#dialog').append("<label><input type='checkbox' name='field' value='" + arrayNumCount + "' checked/>" + index + "</label>");
                 }
                 arrayNumCount++;
             });
@@ -550,6 +550,8 @@ function SetControlField()
                     effectSizes.push({control: controlName,
                         exposed: exposedName})
                     ChooseFieldsForEffectSizes();
+                    controlName = null;
+                    exposedName = null;
                     $(this).dialog("close");
                 },
                 "No": function () {
@@ -582,6 +584,8 @@ function SetExposedField() {
                         exposed: exposedName
                     })
                     ChooseFieldsForEffectSizes();
+                    controlName = null;
+                    exposedName = null;
                     $(this).dialog("close");
                 },
                 "No": function () {
@@ -635,3 +639,14 @@ function GetArrayNumOfColumn(nameOfColumn)
     return arrayNumOfColumn;
 }
 
+function registerHandlers() {
+    $("input:checkbox[name=field]").click(function () {
+        //on Step 1 dialog box, if the user has one or more deselected fields, make sure the "select all" checkbox is all deselected
+        if ($("input:checkbox[name=field]").not(":checked").length > 0) {
+            $("#checkAll").attr('checked', false);
+        }
+        else {
+            $("#checkAll").prop('checked', true);
+        }
+    });
+}
