@@ -178,28 +178,35 @@ function ChooseFieldsForEffectSizes() {
     }
     //Rebuild table with new columns
     BuildDataTable();
-
+    effectSizes = [];
 }
 
 function HideColumn()
 {
-    var nameOfColumn;
-    var arrayNumOfColumn = 0;
-    if (lastClicked.tagName == "TH") {
-        nameOfColumn = lastClicked.innerText;
-    }
-    else {
-        //if they click on the td, get the th that corresponds with it
-        nameOfColumn = $(lastClicked).closest('table').find('th').eq($(lastClicked).index()).innerHTML;
-        nameOfColumn = nameOfColumn.innerText;
-    }
-    $.each(headers, function (index, value) {
-        if (index == nameOfColumn)
-            return false;
-        arrayNumOfColumn++;
-    });
+    var nameOfColumn = GetNameOfColumn();
+    var arrayNumOfColumn = GetArrayNumOfColumn(nameOfColumn);
     hiddenColumns.push(arrayNumOfColumn);
-    tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
+    for (i = 0; i < tableParams["aoColumnDefs"].length; i++) {
+        if (typeof (tableParams["aoColumnDefs"][i].bVisible) != "undefined")
+        {
+            if (tableParams["aoColumnDefs"][i].bVisible == false) {
+                tableParams["aoColumnDefs"][i].aTargets == hiddenColumns;
+                break;
+            }
+            else
+            {
+                tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
+                break;
+            }
+        }
+        else
+        {
+            tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
+            break;
+        }     
+    }
+    if (tableParams["aoColumnDefs"].length == 0)
+        tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
     BuildDataTable();
 }
 
@@ -353,7 +360,6 @@ function CalculateEffectSize(control, exposed, type) {
         //Odds ratio
         case "odds ratio":
             var es = Math.log((control / (1 - control)) / (exposed / (1 - exposed)));
-            alert(es);
             return es;
 
             //Cohen's d
@@ -518,11 +524,114 @@ $(".custom-menu li").click(function () {
 
         // A case for each action. Your actions here
         case "hide": HideColumn(); break;
-        case "control": alert("Select this column as a control column"); break;
-        case "exposed": alert("Select this column as an exposed column"); break;
+        case "control": SetControlField(); break;
+        case "exposed": SetExposedField(); break;
         case "columndef": alert("Change this columns definition (e.g. interpretation etc from step 2)"); break;
+        case "unhide": UnhideAll(); break;
     }
 
     // Hide it AFTER the action was triggered
     $(".custom-menu").hide(100);
 });
+
+function SetControlField()
+{
+    var columnName = GetNameOfColumn();
+    if (exposedName != null) {
+        $("#dialog").html("Set column '" + columnName + "' to be the control field for '" + exposedName + "'?");
+        $("#dialog").dialog({
+            title: "Meta Analysis Alert",
+            resizeable: false,
+            height: 200,
+            modal: true,
+            buttons: {
+                "Yes": function () {
+                    controlName = columnName;
+                    effectSizes.push({control: controlName,
+                        exposed: exposedName})
+                    ChooseFieldsForEffectSizes();
+                    $(this).dialog("close");
+                },
+                "No": function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    }
+    else
+    {
+        controlName = columnName;
+        alert("Control field set to '" + controlName + "'");
+    }
+}
+
+function SetExposedField() {
+    var columnName = GetNameOfColumn();
+    if (controlName != null) {
+        $("#dialog").html("Set column '" + columnName + "' to be the exposed field for '" + controlName + "'?");
+        $("#dialog").dialog({
+            title: "Meta Analysis Alert",
+            resizeable: false,
+            height: 200,
+            modal: true,
+            buttons: {
+                "Yes": function () {
+                    exposedName = columnName;
+                    effectSizes.push({
+                        control: controlName,
+                        exposed: exposedName
+                    })
+                    ChooseFieldsForEffectSizes();
+                    $(this).dialog("close");
+                },
+                "No": function () {
+                    $(this).dialog("close");
+                }
+            }
+        });
+    }
+    else {
+        exposedName = columnName;
+        alert("Exposed field set to '" + exposedName + "'");
+    }
+}
+
+function UnhideAll() {
+    hiddenColumns = [];
+    var columnsToDelete = [];
+    for (i = 0; i < tableParams["aoColumnDefs"].length; i++) {
+        if (typeof (tableParams["aoColumnDefs"][i].bVisible) != "undefined") {
+            if(tableParams["aoColumnDefs"][i].bVisible == false){
+                columnsToDelete.push(i);
+            }
+        }
+        
+    }
+    tableParams["aoColumnDefs"].multisplice(parseInt(columnsToDelete.toString()), 1);
+    BuildDataTable();
+}
+
+function GetNameOfColumn()
+{
+    var nameOfColumn;
+    if (lastClicked.tagName == "TH") {
+        nameOfColumn = lastClicked.innerText;
+    }
+    else {
+        //if they click on the td, get the th that corresponds with it
+        nameOfColumn = $.parseHTML($(lastClicked).closest('table').find('th').eq($(lastClicked).index())[0].innerHTML)[0].innerText;
+    }
+    return nameOfColumn;
+}
+
+function GetArrayNumOfColumn(nameOfColumn)
+{
+    var arrayNumOfColumn = 0;
+    $.each(headers, function (index, value) {
+        if (index == nameOfColumn)
+            return false;
+        arrayNumOfColumn++;
+    });
+    return arrayNumOfColumn;
+}
+
