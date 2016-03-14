@@ -10,6 +10,7 @@
 *
 \************************************************************************************************************************/
 //Initialise global variables for table generation
+var hot1;
 var tableHTML;
 var headers = {
     "Experiment Name": []
@@ -133,13 +134,14 @@ function generateMetaAnalysis(data) {
         });
     }
 
-    if (isNew) {
+    /*if (isNew) {
         OpenDialogBox("Step 1: Choose fields", "Looks like this is a new meta analysis. To start, please choose which of the following fields you would like to keep in the meta analysis", headers, true, false, 1);
         registerHandlers();
-    }
+    }*/
 
     //Populate table from values in arrays
-
+    $.unblockUI();
+    BuildHandsOnTable();
 
 }
 
@@ -183,31 +185,23 @@ function ChooseFieldsForEffectSizes() {
 
 function HideColumn()
 {
-    var nameOfColumn = GetNameOfColumn();
-    var arrayNumOfColumn = GetArrayNumOfColumn(nameOfColumn);
-    hiddenColumns.push(arrayNumOfColumn);
-    for (i = 0; i < tableParams["aoColumnDefs"].length; i++) {
-        if (typeof (tableParams["aoColumnDefs"][i].bVisible) != "undefined")
+    var arrayNumOfColumn = hot1.getSelected()[1];
+    if (hiddenColumns.length > 0) {
+        hiddenColumns.sort();
+        //Account for array number of column changing with hidden cols
+        //But not changing in the source data
+        for (i = 0; i < hiddenColumns.length; i++)
         {
-            if (tableParams["aoColumnDefs"][i].bVisible == false) {
-                tableParams["aoColumnDefs"][i].aTargets == hiddenColumns;
-                break;
-            }
-            else
-            {
-                tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
-                break;
+            if (hiddenColumns[i] <= arrayNumOfColumn) {
+                arrayNumOfColumn++;
             }
         }
-        else
-        {
-            tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
-            break;
-        }     
     }
-    if (tableParams["aoColumnDefs"].length == 0)
-        tableParams["aoColumnDefs"].push({ "aTargets": hiddenColumns, "bVisible": false, "bSearchable": false });
-    BuildDataTable();
+    if(hiddenColumns.indexOf(arrayNumOfColumn) === -1)
+        hiddenColumns.push(arrayNumOfColumn);
+
+   
+    BuildHandsOnTable();
 }
 
 function OpenDialogBox(title, msgString, checkList, isReturn, returnCanBeNull, step) {
@@ -281,7 +275,8 @@ function Step2(){
 
     //Initialise Datatable:
     tableHTML = "<table id = 'MetaID" + params['id'][0] + "' class='display' cellspacing='0' width='100%'></table>";
-    BuildDataTable();
+    BuildHandsOnTable();
+    //BuildDataTable();
 
     //If new, ask which columns to do meta analysis on:
     /*
@@ -429,8 +424,56 @@ function UpdateWarningText() {
 
 }
 
-function BuildDataTable() {
+function BuildHandsOnTable() {
+    //Populate data in a fashion that HandsOnTable can use
+    var handsOnTableHeaders = [];
+    var myData = [];
+    for (i = 0; i < tableCols.length; i++) {
+        if (hiddenColumns.indexOf(i) === -1)
+            handsOnTableHeaders.push(tableCols[i].title);
+    }
+    for (i = 0; i < tableRows.length; i++) {
+        if (hiddenColumns.indexOf(i) === -1)
+            myData.push(tableRows[i]);
+    }
 
+    //Get container width & height for use
+    
+
+    hot1 = new Handsontable(document.getElementById('metaTableContainer'), {
+        data: tableRows,
+        startRows: tableRows.length,
+        startCols: handsOnTableHeaders.length,
+        width: $("#container").width(),
+        height: 22.5*(tableRows.length+3),
+        minSpareCols: 0,
+        minSpareRows: 0,
+        rowHeaders: true,
+        colHeaders: handsOnTableHeaders,
+        contextMenu: {
+            selector: '.context-menu-sub',
+            callback: function (key, options) {
+                lastClicked = event.target;
+                if (key === 'hide') {
+                    setTimeout(function () {
+                        //timeout is used to make sure the menu collapsed before alert is shown
+                        HideColumn();
+                    }, 100);
+                }
+            },
+            items: {
+                "about": { name: 'About this menu' },
+                "hide": {
+                    name: 'Hide Column',
+                }
+            }
+        }
+    });
+    hot1.render();
+}
+
+function BuildDataTable() {
+    /*
     if (typeof (_table) != "undefined") {
         if(_table != null)
             _table.destroy();
@@ -439,7 +482,8 @@ function BuildDataTable() {
     //refresh variable params
     tableParams.data = tableRows;
     tableParams.columns = tableCols;
-    _table = $('#MetaID' + params["id"][0]).DataTable(tableParams);
+    _table = $('#MetaID' + params["id"][0]).DataTable(tableParams);*/
+    BuildHandsOnTable();
 }
 
 //Event listener for choosing which columns to do meta analysis on
@@ -650,3 +694,52 @@ function registerHandlers() {
         }
     });
 }
+
+function GenerateVisualisation()
+{
+    //Take data from meta analysis (post-calculations)
+    //Populate array in the following style:
+
+    var data = [
+   { "year": 1991, "name": "alpha", "value": 15 },
+   { "year": 1992, "name": "alpha", "value": 34 },
+   { "year": 1991, "name": "alpha2", "value": 17 },
+   { "year": 1992, "name": "alpha2", "value": 65 },
+   { "year": 1991, "name": "beta", "value": 10 },
+   { "year": 1992, "name": "beta", "value": 10 },
+   { "year": 1991, "name": "beta2", "value": 40 },
+   { "year": 1992, "name": "beta2", "value": 38 },
+   { "year": 1991, "name": "gamma", "value": 5 },
+   { "year": 1992, "name": "gamma", "value": 10 },
+   { "year": 1991, "name": "gamma2", "value": 20 },
+   { "year": 1992, "name": "gamma2", "value": 34 },
+   { "year": 1991, "name": "delta", "value": 50 },
+   { "year": 1992, "name": "delta", "value": 43 },
+   { "year": 1991, "name": "delta2", "value": 17 },
+   { "year": 1992, "name": "delta2", "value": 35 }
+    ]
+
+    //use d3plus in the following style:
+
+
+    var visualization = d3plus.viz()
+      .container("#viz")
+      .data(data)
+      .type("box")
+      .id("name")
+      .x("year")
+      .y("value")
+      .time("year")
+      .ui([{
+          "label": "Visualization Type",
+          "method": "type",
+          "value": ["scatter", "box"]
+      }])
+      .draw()
+
+}
+
+$(window).resize(function () {
+    hot1.render();
+
+});

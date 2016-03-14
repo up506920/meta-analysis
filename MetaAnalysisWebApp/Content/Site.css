@@ -17,9 +17,10 @@ header, footer, nav, section {
     height: 100vh;
 }
 
-#metaTableContainer {
-    padding-top: 2em;
-}
+
+/*#metaTableContainer {
+    overflow:scroll;
+}*/
 
 .footerText{
     text-align:center;
