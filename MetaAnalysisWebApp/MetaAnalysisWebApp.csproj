@@ -561,6 +561,8 @@
     <Content Include="Views\Shared\Error.cshtml" />
     <Content Include="Views\Shared\_Layout.cshtml" />
     <Content Include="Views\Meta\Index.cshtml" />
+    <Content Include="TestData\TestData.JSON" />
+    <Content Include="Views\Meta\d3test.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="App_Data\" />

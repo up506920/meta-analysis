@@ -71,7 +71,7 @@ $(document).ready(function () {
             id: ["1"]
         };
     }
-    //
+    //When in use with the API, this is the correct way to do this:
     $.ajax({
         type: 'POST',
         url: '/Meta/Test/',
@@ -80,12 +80,19 @@ $(document).ready(function () {
         },
         dataType: 'json',
         success: function(data) {
-            //alert(JSON.stringify(data));
-            //$('#test').append(JSON.stringify(data));
             ajaxData = data;
             generateMetaAnalysis(ajaxData);
         }
     });
+    //Get test data:
+    /*$.ajax({
+        url: "/TestData/TestData.JSON",
+        dataType: 'json',
+        success: function (data) {
+            ajaxData = data;
+            generateMetaAnalysis(ajaxData);
+        }
+    });*/
 });
 
 function generateMetaAnalysis(data) {
@@ -145,15 +152,13 @@ function generateMetaAnalysis(data) {
 
 function ChooseFieldsForEffectSizes() {
 
-    var typeOfEffectSize = "odds ratio";
+    var typeOfEffectSize = $('input[name=effectSizeType]:checked').val()
     var controlVal = null;
     var exposedVal = null;
-
     //incorporate in another loop:
-    x = 0;
     for (i = 0; i < effectSizes.length; i++) {
-        jQuery.each(ajaxData.Studies, function () {
-            jQuery.each(this.Columns, function() {
+        for (y = 0; y < ajaxData.Studies.length; y++) {
+            jQuery.each(ajaxData.Studies[y].Columns, function () {
                 switch (this.ColumnName) {
                     case effectSizes[i].control:
                         controlVal = this.Value;
@@ -166,17 +171,44 @@ function ChooseFieldsForEffectSizes() {
                 }
             });
             if (controlVal != null && exposedVal != null) {
-                tableCols.push({ title: effectSizes[i].control + " vs " + effectSizes[i].exposed + " Effect Size" });
-                tableRows[x].push(CalculateEffectSize(controlVal, exposedVal, typeOfEffectSize).toString());
+                tableRows[y].push(CalculateEffectSize(controlVal, exposedVal, typeOfEffectSize).toString());
+                controlVal = null;
+                exposedVal = null;
             }
             else
-                tableRows[x].push("");
-            controlVal = null;
-            exposedVal = null;
-            x++;
-        });
+                tableRows[y].push("");
+        }
+        if (controlName != null && exposedName != null) {
+            tableCols.push({ title: "Effect Sizes " + effectSizes[i].control + " vs " + effectSizes[i].exposed + " Effect Size" });
+        }
     }
-    //Rebuild table with new columns
+    //
+    for (i = 0; i < effectSizes.length; i++) {
+        for (y = 0; y < ajaxData.Studies.length; y++) {
+            jQuery.each(ajaxData.Studies[y].Columns, function () {
+                switch (this.ColumnName) {
+                    case effectSizes[i].control:
+                        controlVal = this.Value;
+                        break;
+                    case effectSizes[i].exposed:
+                        exposedVal = this.Value;
+                        break;
+                    default:
+                        break;
+                }
+            });
+            if (controlVal != null && exposedVal != null) {
+                tableRows[y].push(CalculateWeights(controlVal, exposedVal, typeOfEffectSize).toString());
+                controlVal = null;
+                exposedVal = null;
+            }
+            else
+                tableRows[y].push("");
+        }
+        if (controlName != null && exposedName != null) {
+            tableCols.push({ title: "Weights " + effectSizes[i].control + " vs " + effectSizes[i].exposed + " Effect Size" });
+        }
+    }
     BuildDataTable();
     effectSizes = [];
 }
@@ -361,7 +393,9 @@ function CalculateEffectSize(control, exposed, type) {
         case "odds ratio":
             var es = Math.log((control / (1 - control)) / (exposed / (1 - exposed)));
             return es;
-
+        case "neg odds ratio":
+            var es = -Math.log((control / (1 - control)) / (exposed / (1 - exposed)));
+            return es;
             //Cohen's d
 
             //etc...
@@ -539,6 +573,7 @@ function SetControlField()
     var columnName = GetNameOfColumn();
     if (exposedName != null) {
         $("#dialog").html("Set column '" + columnName + "' to be the control field for '" + exposedName + "'?");
+        PopulateDialogWithEffectSizes();
         $("#dialog").dialog({
             title: "Meta Analysis Alert",
             resizeable: false,
@@ -563,14 +598,22 @@ function SetControlField()
     else
     {
         controlName = columnName;
-        alert("Control field set to '" + controlName + "'");
     }
+}
+
+function PopulateDialogWithEffectSizes()
+{
+    $("#dialog").append("<div id='effectSizeRadios'><ul>");
+    $("#dialog").append("<li class='noBullet'><input type='radio' name='effectSizeType' value='odds ratio' class='radioCenter'/>Odds Ratio</input></li>");
+    $("#dialog").append("<li class='noBullet'><input type='radio' name='effectSizeType' value='neg odds ratio' class='radioCenter'/>Negative Odds Ratio</input></li>");
+    $("#dialog").append("</ul></div>");
 }
 
 function SetExposedField() {
     var columnName = GetNameOfColumn();
     if (controlName != null) {
         $("#dialog").html("Set column '" + columnName + "' to be the exposed field for '" + controlName + "'?");
+        PopulateDialogWithEffectSizes();
         $("#dialog").dialog({
             title: "Meta Analysis Alert",
             resizeable: false,
@@ -596,7 +639,6 @@ function SetExposedField() {
     }
     else {
         exposedName = columnName;
-        alert("Exposed field set to '" + exposedName + "'");
     }
 }
 

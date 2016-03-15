@@ -13,7 +13,10 @@ namespace MetaAnalysisWebApp.Controllers
     {
         //
         // GET: /Meta/
-
+         public ActionResult D3Test(string id)
+        {
+            return View();
+        }
         public ActionResult Index(string id)
         {
             if (id == null)
@@ -63,6 +66,14 @@ namespace MetaAnalysisWebApp.Controllers
             columnsExp2.Add(new ColumnsViewModel("Type of Participants", "STU"));
             columnsExp2.Add(new ColumnsViewModel("Delay between the event & the PEI", "medium"));
             columnsExp2.Add(new ColumnsViewModel("This column is only in Blank's data", "Test data 2"));
+            columnsExp2.Add(new ColumnsViewModel("Correct Memory Misled Warning M", "0.1"));
+            columnsExp2.Add(new ColumnsViewModel("Correct Memory Misled Warning n", "77"));
+            columnsExp2.Add(new ColumnsViewModel("Correct Memory Control Warning M", "0.16"));
+            columnsExp2.Add(new ColumnsViewModel("Correct Memory Control Warning n", "77"));
+            columnsExp2.Add(new ColumnsViewModel("False Memory Misled Warning M", "0.21"));
+            columnsExp2.Add(new ColumnsViewModel("False Memory Misled Warning n", "77"));
+            columnsExp2.Add(new ColumnsViewModel("False Memory Control Warning M", "0.06"));
+            columnsExp2.Add(new ColumnsViewModel("False Memory Control Warning n", "77"));
             StudiesViewModel exp2 = new StudiesViewModel(2, "Blank (1998), Exp. 1", columnsExp2);
 
             List<StudiesViewModel> studies = new List<StudiesViewModel>();

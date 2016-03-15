@@ -121,12 +121,19 @@ h1, h2 {
     color: #333;
     border-radius: 5px;
     cursor: pointer;
+    padding: 0px;
 }
 
 .noBullet {
     list-style-type:none;
     cursor: pointer;
+    font-weight:bold;
 }
+
+.noBullet:hover{
+    background:#eaeaea;
+}
+
 input[type=radio]{
     cursor: pointer;
 }
