@@ -64,8 +64,13 @@ namespace MetaAnalysisWebApp.Controllers
 
             List<ColumnsViewModel> columnsExp2 = new List<ColumnsViewModel>();
             columnsExp2.Add(new ColumnsViewModel("Type of Participants", "STU"));
-            columnsExp2.Add(new ColumnsViewModel("Delay between the event & the PEI", "medium"));
-            columnsExp2.Add(new ColumnsViewModel("This column is only in Blank's data", "Test data 2"));
+            columnsExp2.Add(new ColumnsViewModel("Delay between the event & the PEI", "short"));
+            columnsExp2.Add(new ColumnsViewModel("Type of post event information", "IND"));
+            columnsExp2.Add(new ColumnsViewModel("No. misleading items (per participant)", "2"));
+            columnsExp2.Add(new ColumnsViewModel("Type of misleading items", "CON"));
+            columnsExp2.Add(new ColumnsViewModel("Type of control items", "NEU"));
+            columnsExp2.Add(new ColumnsViewModel("Misinformation manipulation (within/ between)", "within"));
+            columnsExp2.Add(new ColumnsViewModel("This column is only in the second row's data", "Test data 2"));
             columnsExp2.Add(new ColumnsViewModel("Correct Memory Misled Warning M", "0.1"));
             columnsExp2.Add(new ColumnsViewModel("Correct Memory Misled Warning n", "77"));
             columnsExp2.Add(new ColumnsViewModel("Correct Memory Control Warning M", "0.16"));
@@ -74,11 +79,30 @@ namespace MetaAnalysisWebApp.Controllers
             columnsExp2.Add(new ColumnsViewModel("False Memory Misled Warning n", "77"));
             columnsExp2.Add(new ColumnsViewModel("False Memory Control Warning M", "0.06"));
             columnsExp2.Add(new ColumnsViewModel("False Memory Control Warning n", "77"));
-            StudiesViewModel exp2 = new StudiesViewModel(2, "Blank (1998), Exp. 1", columnsExp2);
+            StudiesViewModel exp2 = new StudiesViewModel(2, "Belli et al. (1994), Exp. 2", columnsExp2);
+
+            List<ColumnsViewModel> columnsExp3 = new List<ColumnsViewModel>();
+            columnsExp3.Add(new ColumnsViewModel("Type of Participants", "STU"));
+            columnsExp3.Add(new ColumnsViewModel("Delay between the event & the PEI", "medium"));
+            columnsExp3.Add(new ColumnsViewModel("Type of post event information", "IND"));
+            columnsExp3.Add(new ColumnsViewModel("No. misleading items (per participant)", "4"));
+            columnsExp3.Add(new ColumnsViewModel("Type of misleading items", "CON"));
+            columnsExp3.Add(new ColumnsViewModel("Type of control items", "ABS"));
+            columnsExp3.Add(new ColumnsViewModel("Misinformation manipulation (within/ between)", "within"));
+            columnsExp3.Add(new ColumnsViewModel("Correct Memory Misled Warning M", "0.78"));
+            columnsExp3.Add(new ColumnsViewModel("Correct Memory Misled Warning n", "22"));
+            columnsExp3.Add(new ColumnsViewModel("Correct Memory Control Warning M", "0.78"));
+            columnsExp3.Add(new ColumnsViewModel("Correct Memory Control Warning n", "22"));
+            columnsExp3.Add(new ColumnsViewModel("False Memory Misled Warning M", "0.22"));
+            columnsExp3.Add(new ColumnsViewModel("False Memory Misled Warning n", "22"));
+            columnsExp3.Add(new ColumnsViewModel("False Memory Control Warning M", "0.22"));
+            columnsExp3.Add(new ColumnsViewModel("False Memory Control Warning n", "22"));
+            StudiesViewModel exp3 = new StudiesViewModel(3, "Blank (1998), Exp. 1", columnsExp3);
 
             List<StudiesViewModel> studies = new List<StudiesViewModel>();
             studies.Add(exp1);
             studies.Add(exp2);
+            studies.Add(exp3);
             
             MetaAnalysisAPIViewModel JsonData = new MetaAnalysisAPIViewModel(metaID, studies);
 

@@ -24,9 +24,11 @@ var controlName = null;
 var exposedName = null;
 var step = 1;
 var ajaxData;
+var weight;
 var params;
 var isNew = true;
 var _table;
+var weightsArray = [];
 var tableCols = [];
 var tableRows = [];
 var hiddenColumns = [];
@@ -147,7 +149,6 @@ function generateMetaAnalysis(data) {
 
     //Populate table from values in arrays
 
-
 }
 
 function ChooseFieldsForEffectSizes() {
@@ -198,7 +199,9 @@ function ChooseFieldsForEffectSizes() {
                 }
             });
             if (controlVal != null && exposedVal != null) {
-                tableRows[y].push(CalculateWeights(controlVal, exposedVal, typeOfEffectSize).toString());
+                weight = CalculateWeights(controlVal, exposedVal, y, typeOfEffectSize);
+                weightsArray.push(weight);
+                tableRows[y].push(weight.toString());
                 controlVal = null;
                 exposedVal = null;
             }
@@ -209,8 +212,36 @@ function ChooseFieldsForEffectSizes() {
             tableCols.push({ title: "Weights " + effectSizes[i].control + " vs " + effectSizes[i].exposed + " Effect Size" });
         }
     }
+    /*for (i = 0; i < effectSizes.length; i++) {
+        for (y = 0; y < ajaxData.Studies.length; y++) {
+            jQuery.each(ajaxData.Studies[y].Columns, function () {
+                switch (this.ColumnName) {
+                    case effectSizes[i].control:
+                        controlVal = this.Value;
+                        break;
+                    case effectSizes[i].exposed:
+                        exposedVal = this.Value;
+                        break;
+                    default:
+                        break;
+                }
+            });
+            if (controlVal != null && exposedVal != null) {
+                //tableRows[y].push(CalculateSquaredDeviations(controlVal, exposedVal, i, typeOfEffectSize).toString());
+                controlVal = null;
+                exposedVal = null;
+            }
+            else
+                tableRows[y].push("");
+        }
+        if (controlName != null && exposedName != null) {
+            tableCols.push({ title: "Squared Deviation " + effectSizes[i].control + " vs " + effectSizes[i].exposed + " Effect Size" });
+        }
+    }*/
+
     BuildDataTable();
     effectSizes = [];
+    weightsArray = [];
 }
 
 function HideColumn()
@@ -396,10 +427,52 @@ function CalculateEffectSize(control, exposed, type) {
         case "neg odds ratio":
             var es = -Math.log((control / (1 - control)) / (exposed / (1 - exposed)));
             return es;
+        default:
+            var es = -Math.log((control / (1 - control)) / (exposed / (1 - exposed)));
+            return es;
+
             //Cohen's d
 
             //etc...
     }
+}
+
+function CalculateWeights(control, exposed, indexNum, type) {
+    switch (type) {
+        //Does this definitely work?
+        case "odds ratio":
+            var controlNum = headers[controlName.slice(0, -1) + "n"][indexNum];
+            var exposedNum = headers[exposedName.slice(0, -1) + "n"][indexNum];
+            var we =  1/(1/(exposed*exposedNum)+1/((1-exposed)*exposedNum)+1/(control*controlNum)+1/((1-control)*controlNum));
+            return we;
+        case "neg odds ratio":
+            var controlNum = headers[controlName.slice(0, -1) + "n"][indexNum];
+            var exposedNum = headers[exposedName.slice(0, -1) + "n"][indexNum];
+            var we = 1 / (1 / (exposed * exposedNum) + 1 / ((1 - exposed) * exposedNum) + 1 / (control * controlNum) + 1 / ((1 - control) * controlNum));
+            return we;
+        default:
+            var controlNum = headers[controlName.slice(0, -1) + "n"][indexNum];
+            var exposedNum = headers[exposedName.slice(0, -1) + "n"][indexNum];
+            var we = 1 / (1 / (exposed * exposedNum) + 1 / ((1 - exposed) * exposedNum) + 1 / (control * controlNum) + 1 / ((1 - control) * controlNum));
+            return we;
+    }
+}
+
+
+function CalculateSquaredDeviations(control, exposed, indexNum, type) {
+    /*switch (type) {
+        case "odds ratio":
+            var controlNum = headers[controlName.slice(0, -1) + "n"][i];
+            var exposedNum = headers[exposedName.slice(0, -1) + "n"][i];
+            var sq = 1 / (1 / (exposed * exposedNum) + 1 / ((1 - exposed) * exposedNum) + 1 / (control * controlNum) + 1 / ((1 - control) * controlNum));
+            return sq;
+        case "neg odds ratio":
+            var controlNum = headers[controlName.slice(0, -1) + "n"][i];
+            var exposedNum = headers[exposedName.slice(0, -1) + "n"][i];
+            var sq = 1 / (1 / (exposed * exposedNum) + 1 / ((1 - exposed) * exposedNum) + 1 / (control * controlNum) + 1 / ((1 - control) * controlNum));
+            return sq;
+    }*/
+    return null;
 }
 
 function CheckIfNew() {
@@ -446,7 +519,7 @@ function UpdateWarningText() {
             $("#GenerateButton").hide();
             break;
         case 2:
-            warningText = "Click on a column to use as the control for " + controlName;
+            warningText = "Click on a column to use as the control for " + exposedName;
             $("#GenerateButton").hide();
             break;
         case 3:
